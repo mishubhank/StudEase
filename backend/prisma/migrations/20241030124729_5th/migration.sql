@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Student" ADD COLUMN     "slat" DOUBLE PRECISION,
+ADD COLUMN     "slong" DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "Tutor" ADD COLUMN     "lat" DOUBLE PRECISION,
+ADD COLUMN     "long" DOUBLE PRECISION;

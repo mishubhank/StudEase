@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+  name     String
+
+  tutor   Tutor?
+  student Student?
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model Tutor {
+  id            Int        @id @default(autoincrement())
+  userId        Int        @unique
+  user          User       @relation(fields: [userId], references: [id])
+  location      Location[]
+  edu           Json?
+  degree        String?
+  specilization String?
+  lat           Float? 
+  long          Float?
+  active        Boolean    @default(false)
+  offering      Json?
+  matches       Match[]
+  photo         String?
+  rating        Int?
+
+  @@index([active])
+  @@index([offering])
+}
+
+model Match {
+  id         Int     @id @default(autoincrement())
+  studentId  Int
+  tutorId    Int
+  student    Student @relation(fields: [studentId], references: [id])
+  tutor      Tutor   @relation(fields: [tutorId], references: [id])
+  studentcon Boolean @default(false)
+  tutorcon   Boolean @default(false)
+  status     Boolean @default(false)
+
+  messages Message[]
+
+  @@unique([studentId, tutorId])
+  @@index([status])
+}
+
+model Student {
+  id        Int      @id @default(autoincrement())
+  studentId Int      @unique
+  user      User     @relation(fields: [studentId], references: [id])
+  Area      String?
+  std       Int
+  // rea       String?
+  postedON  DateTime
+  slat      Float?
+  slong     Float?
+  matches   Match[]
+}
+
+model Location {
+  id      Int    @id @default(autoincrement())
+  tutorId Int
+  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+  name    String
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  receiverId Int
+  matchId    Int
+  content    String
+  createdAt  DateTime @default(now())
+
+  sender   User  @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  match    Match @relation(fields: [matchId], references: [id])
+
+  @@index([matchId])
+}
