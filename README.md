@@ -16,5 +16,5 @@ _A platform to seamlessly connect local tutors and students for hassle-free lear
 ## 🔧 Setup & Installation  
 1. **Clone the repository:**  
    ```bash
-   git clone https://github.com/your-username/StudEase.git
+   git clone https://github.com/mishubhank/StudEase.git
    cd StudEase
