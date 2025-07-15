@@ -1,7 +1,7 @@
 // const jwt2= require('jsonwebtoken');
 
 // const authReq=(req:any,res:any ,next:any)=>{
- 
+
 //    const authHeader= req.headers('Authorization');
 //    console.log(authHeader);
 //    const token=authHeader.split('')[1]
@@ -25,7 +25,6 @@
 //     })
 
 //    }
-
 
 // }
 // module.exports=authReq

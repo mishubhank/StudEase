@@ -1,10 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import express, { Request, Response } from 'express';
-const middleware = require('../Auth/middleware');
+import express, { Request, Response } from "express";
+const middleware = require("../Auth/middleware");
 const { Server } = require("socket.io");
 const prisma = new PrismaClient();
 const router = express.Router();
-
 
 // Apply middleware
 const io = new Server(5001, {
@@ -13,16 +12,12 @@ const io = new Server(5001, {
   },
 });
 
-
- io.on('connection',(socket:any)=>{
-
- console.log("server running  ")
+io.on("connection", (socket: any) => {
+  console.log("server running  ");
 
   socket.emit("welcome", { message: "Hi, welcome to the WebSocket server!" });
- return {"message":'hi'}
-
-
- })
+  return { message: "hi" };
+});
 
 router.use(middleware);
 
@@ -30,10 +25,10 @@ router.use(middleware);
 interface AuthRequest extends Request {
   user: {
     userId: number;
-  }
+  };
 }
 
-const sayyes = router.post('/', async (req: any, res: any) => {
+const sayyes = router.post("/", async (req: any, res: any) => {
   try {
     // Get tutor ID from authenticated user
     const tutorId = req.user.userId;
@@ -42,35 +37,36 @@ const sayyes = router.post('/', async (req: any, res: any) => {
     // Finding valid tutor
     const tutor = await prisma.tutor.findUnique({
       where: {
-        userId: tutorId
-      }
+        userId: tutorId,
+      },
     });
+    console.log("inside /int route", tutor?.userId);
 
     if (!tutor) {
       return res.status(403).json({
-        message: "You are not a tutor"
+        message: "You are not a tutor",
       });
     }
 
     // Get and validate student ID from request body
     const { studentId } = req.body;
-    
+
     if (!studentId) {
       return res.status(400).json({
-        message: "studentId is required"
+        message: "studentId is required",
       });
     }
 
     // Find student
     const student = await prisma.student.findUnique({
-      where: { 
-        studentId: studentId 
-      }
+      where: {
+        studentId: studentId,
+      },
     });
 
     if (!student) {
       return res.status(400).json({
-        message: "Student not found. Please check the studentId."
+        message: "Student not found. Please check the studentId.",
       });
     }
 
@@ -80,20 +76,20 @@ const sayyes = router.post('/', async (req: any, res: any) => {
         where: {
           studentId: student.id,
           tutorId: tutor.id,
-          status: true
-        }
+          status: true,
+        },
       });
 
       if (existingMatch) {
         return res.status(400).json({
           message: "You have already matched with this student",
-          match: existingMatch
+          match: existingMatch,
         });
       }
     } catch (error) {
       console.error("Error checking existing match:", error);
       return res.status(500).json({
-        message: "Failed to check existing matches. Please try again later."
+        message: "Failed to check existing matches. Please try again later.",
       });
     }
 
@@ -105,32 +101,32 @@ const sayyes = router.post('/', async (req: any, res: any) => {
           tutorId: tutor.id,
           studentcon: true,
           status: false,
-          tutorcon: false
-        }
+          tutorcon: false,
+        },
       });
 
       // If there's a pending match from student, complete it
       if (pendingMatch) {
         const updatedMatch = await prisma.match.update({
           where: {
-            id: pendingMatch.id
+            id: pendingMatch.id,
           },
           data: {
             tutorcon: true,
-            status: true
-          }
+            status: true,
+          },
         });
 
-        console.log('Match updated:', updatedMatch);
+        console.log("Match updated:", updatedMatch);
         return res.json({
           message: "Match completed successfully!",
-          match: updatedMatch
+          match: updatedMatch,
         });
       }
     } catch (error) {
       console.error("Error processing pending match:", error);
       return res.status(500).json({
-        message: "Failed to process pending match. Please try again later."
+        message: "Failed to process pending match. Please try again later.",
       });
     }
 
@@ -142,28 +138,26 @@ const sayyes = router.post('/', async (req: any, res: any) => {
           studentId: student.id,
           status: false,
           studentcon: false,
-          tutorcon: true
-        }
+          tutorcon: true,
+        },
       });
 
-      console.log('New match created:', newMatch);
+      console.log("New match created:", newMatch);
       return res.json({
         message: "Successfully showed interest in student",
-        match: newMatch
+        match: newMatch,
       });
-    } catch (error:any) {
-      
+    } catch (error: any) {
       console.error("Error creating new match:", error);
       return res.status(500).json({
-        message: "Failed to create new match. Please try again later."
+        message: "Failed to create new match. Please try again later.",
       });
     }
-
   } catch (error) {
     // Handle any unexpected errors
     console.error("Unexpected error in tutor interest endpoint:", error);
     return res.status(500).json({
-      message: "An unexpected error occurred. Please try again later."
+      message: "An unexpected error occurred. Please try again later.",
     });
   }
 });

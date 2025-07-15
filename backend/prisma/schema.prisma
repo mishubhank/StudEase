@@ -1,43 +1,45 @@
 generator client {
   provider = "prisma-client-js"
-}
+} 
 
-datasource db {
+
+ datasource db {
   provider = "postgres"
   url      = env("DATABASE_URL")
-}
+ }
 
-model User {
+
+ model User {
   id       Int    @id @default(autoincrement())
   email    String @unique
   password String
   name     String
+  profile Boolean @default(false)
 
   tutor   Tutor?
   student Student?
-
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+  sentNotifications     Notification[] @relation("SenderNotifications")
+  receivedNotifications Notification[] @relation("RecipientNotifications")
 }
 
 model Tutor {
   id            Int        @id @default(autoincrement())
-  userId        Int        @unique
+  userId        Int        @unique 
   user          User       @relation(fields: [userId], references: [id])
   location      Location[]
   edu           Json?
   degree        String?
   specilization String?
-  lat           Float? 
-  long          Float?
-  active        Boolean    @default(false)
-  offering      Json?
-  matches       Match[]
-  photo         String?
-  rating        Int?
+  subjects  Subject[]
+  active   Boolean @default(false)
+  profile Boolean @default(false)
+  
+  matches  Match[]
+  photo    String?
+  rating   Int?
 
   @@index([active])
-  @@index([offering])
+ 
 }
 
 model Match {
@@ -50,43 +52,68 @@ model Match {
   tutorcon   Boolean @default(false)
   status     Boolean @default(false)
 
-  messages Message[]
+ 
 
   @@unique([studentId, tutorId])
   @@index([status])
 }
 
 model Student {
-  id        Int      @id @default(autoincrement())
-  studentId Int      @unique
-  user      User     @relation(fields: [studentId], references: [id])
-  Area      String?
-  std       Int
+  id         Int       @id @default(autoincrement())
+  studentId  Int       @unique
+  user       User      @relation(fields: [studentId], references: [id])
+  Area       String 
+  std        Int
+  subject  Subject[]
+  location   Location? @relation(fields: [locationId], references: [id])
+  locationId Int?
+  message    String
   // rea       String?
-  postedON  DateTime
-  slat      Float?
-  slong     Float?
-  matches   Match[]
+  About      String
+  postedON   DateTime
+  slat       Float?
+  slong      Float?
+  matches    Match[]
+  profile Boolean @default(false)
+
 }
 
 model Location {
-  id      Int    @id @default(autoincrement())
+  id      Int       @id @default(autoincrement())
   tutorId Int
-  tutor   Tutor  @relation(fields: [tutorId], references: [id])
+  lat     Float?
+  long    Float?
+  tutor   Tutor     @relation(fields: [tutorId], references: [id])
   name    String
+  // Student   Student? @relation(fields: [studentId], references: [id])
+  // studentId Int?
+  // Student Student[]
+  Student Student[]
 }
 
-model Message {
-  id         Int      @id @default(autoincrement())
-  senderId   Int
-  receiverId Int
-  matchId    Int
-  content    String
-  createdAt  DateTime @default(now())
 
-  sender   User  @relation("SentMessages", fields: [senderId], references: [id])
-  receiver User  @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  match    Match @relation(fields: [matchId], references: [id])
 
-  @@index([matchId])
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  senderId    Int?     // ID of the user who sent the notification (optional)
+  recipientId Int      // ID of the user who receives the notification
+  sender      User?    @relation("SenderNotifications", fields: [senderId], references: [id])
+  recipient   User     @relation("RecipientNotifications", fields: [recipientId], references: [id])
+  content     String   // Content of the notification
+   type        String   // Type of notification (e.g., "message", "match", etc.)
+  isRead      Boolean  @default(false) // Whether the notification has been read
+  createdAt   DateTime @default(now()) // Timestamp when the notification was created
+
+
+  @@index([recipientId])
 }
+
+model Subject{
+
+  id          Int      @id @default(autoincrement())
+   subject  String
+  By  Tutor[] 
+  studs   Student[]
+}
+ 

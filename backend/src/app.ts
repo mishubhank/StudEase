@@ -1,12 +1,18 @@
-import express from 'express';
+import express from "express";
 
 const app = express();
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.is("multipart/form-data")) {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 
-var cors = require('cors')
-var corsOptions={
- origin:'*'   
-}
+var cors = require("cors");
+var corsOptions = {
+  origin: "*",
+};
 
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 export default app;

@@ -1,129 +1,95 @@
- 
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+//import {} from '../assets/location-sign-svgrepo-com.svg'
 
- import axios from 'axios'
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
- //import {} from '../assets/location-sign-svgrepo-com.svg'
-
- interface Tutor {
-
-about:string
-photo:string
-edu:{
- year:number 
- specialization:string
- degree:string
-
+interface Tutor {
+  about: string;
+  photo: string;
+  edu: {
+    year: number;
+    specialization: string;
+    degree: string;
+  };
+  offering: string;
+  rating: number;
+  count: number;
+  location: string;
 }
-offering:string 
-rating:number 
-count: number
-location:string
 
+export const ProfilePage = () => {
+  const loggedIn = false;
+  const [res, setResponse] = useState<Tutor | null>(null);
+  //bool loggedIn=false;
+  const params = useParams();
+  const userId = params.userId;
 
-
-
-
- }
- 
-
-
- export const  ProfilePage = ( ) => {
-    const loggedIn=false;
-      const [res, setResponse] = useState<Tutor | null>(null);
-//bool loggedIn=false;
-     const params=useParams();
-     const userId=params.userId
-
-     useEffect(()=>{
-     async function tutorProfile(){
- //   console.log(params.userId);
-         try{
-         const profile= await axios.get(`http://localhost:3000/api/userProfile/${userId}`)
-         setResponse(profile.data); 
-       console.log(profile.data);
-      
-        }
-         catch(e){
-         return {'message':'error fetching profile'}
-
-
-         }
-
-
+  useEffect(() => {
+    async function tutorProfile() {
+      //   console.log(params.userId);
+      try {
+        const profile = await axios.get(
+          `http://localhost:3000/api/userProfile/${userId}`
+        );
+        setResponse(profile.data);
+        console.log(profile.data);
+      } catch (e) {
+        return { message: "error fetching profile" };
+      }
     }
- tutorProfile();
-  
+    tutorProfile();
+  }, []);
 
-     },[])
-    
+  return (
+    <div className="bg-[#3730a3] text-white">
+      <header className="py-6 px-8">
+        <h1 className="text-2xl font-bold">StudEase</h1>
+      </header>
+      <div className="flex justify-center w-full  h-42">
+        <img
+          className=" h-64
+          transition-transform duration-300 ease-in-out hover:scale-105 transform
+          rounded-sm
+          hover:
+         bg-slate-400
+        w-84"
+          src="https://legacy.reactjs.org/logo-og.png"
+          alt="W3Schools.com"
+        />
+        hi
+      </div>
 
-   
+      <div className="flex items-center justify-center h-[calc(100vh-96px)]">
+        <div className="bg-white text-black rounded-lg p-8 shadow-lg w-full max-w-4xl">
+          <h2 className="text-3xl font-bold mb-8">
+            I'm an educator pursuing a Ph.D. in English with experience teaching
+            not only English, but also personality development and communication
+            skills.
+          </h2>
 
-
-    return (
-        
-       <div > 
-         <div className='h-20 bg-pink-200 flex items-center font-sans text-3xl ' >
-        <div className='ml-12'>StudEase</div>
- 
-
-      
-      
-   </div>
-     <div className='flex space-x-4  m-10 '>
-  <div className= 'p-2   font-semibold bg-yellow-200 border-r-sky-300 rounded-2xl   '>afdfdfd </div>
- <div className= 'p-1  font-semibold bg-yellow-200 border-r-sky-300 rounded-2xl  '>afdfdfd </div>
-  <div className= 'p-1  font-semibold bg-yellow-200 border-r-sky-300 rounded-2xl  '>afdfdfd </div>
-  
-         </div>
-   <div className='flex-row flex-1   bg-blue-200'>
-
-   </div>
-   
-    <div className="flex flex-col  h-full bg-blue-200  ">
-    <div  className='h-screen  flex'>
-        <div className=' basis-2/3 p-8
-        '> 
-        
-        <div className='font-bold text-4xl'> I'm an educator pursuing ph.d in English with having experience of teaching not only English But also, personality development, communication skills </div>
-        
-
-    
-       <div className='font-bold text-xl pt-8'>location </div>
-       
-     <div className=' flex flex-row space-x-4' >
-        <div className='rounded-md bg-red-200 p-2 '> Russell Chowk</div>
-         <div className='rounded-md bg-red-200 p-2'> Russell Chowk</div>
-     </div>
-         <div className='' > : )</div>
+          <div className="flex justify-between items-center mb-8">
+            <div className="bg-[#f3f4f6] px-4 py-2 rounded-full">
+              <span className="text-sm font-medium text-gray-700">
+                Russell Chowk
+              </span>
+            </div>
+            <div className="bg-[#f3f4f6] px-4 py-2 rounded-full">
+              <span className="text-sm font-medium text-gray-700">
+                Russell Chowk
+              </span>
+            </div>
           </div>
-
-
-         
-          
-         <div className=' p-6 basis-1/3  rounded-xl '>
-          <img className='  rounded-lg border-red-600' src={res?.photo}/>
-         <span> status </span>
-         <button type="button" className=" w-32 text-white m-3 bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 hover:bg-gradient-to-br  focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Contact</button>
-         </div>
-      
-        
- 
-    </div>
- <div className='footer w-full min-h-48 bg-black flex text-white' >fotter</div>
-
-  </div>
- 
-
+          <button className=" flex  hover:underline-black "></button>
+          <div className="flex justify-end space-x-4">
+            <button className="bg-[#3730a3] text-white font-medium px-6 py-3 rounded-lg hover:bg-[#2e2a84] transition-colors duration-300">
+              Status
+            </button>
+            <button className="bg-[#ff70aa] text-white font-medium px-6 py-3 rounded-lg hover:bg-[#ff4c92] transition-colors duration-300">
+              Contact
+            </button>
+          </div>
         </div>
-   )
-
- }
- 
-
-
-
-
-
-
+      </div>
+    </div>
+  );
+};
