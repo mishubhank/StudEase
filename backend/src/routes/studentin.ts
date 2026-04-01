@@ -1,20 +1,52 @@
 import { PrismaClient } from "@prisma/client";
 import express from "express";
 const middleware = require("../Auth/middleware");
+import { emitMatchNotification } from "../socket";
 
 const prisma = new PrismaClient();
 const router = express.Router();
 
-// Apply middleware
 router.use(middleware);
+
+const createMatchNotifications = async (
+  studentUserId: number,
+  tutorUserId: number,
+  matchId: number,
+) => {
+  await prisma.notification.createMany({
+    data: [
+      {
+        recipientId: studentUserId,
+        content: "You have a new match with a tutor.",
+        type: "MATCH",
+        matchId,
+      },
+      {
+        recipientId: tutorUserId,
+        content: "You have a new match with a student.",
+        type: "MATCH",
+        matchId,
+      },
+    ],
+  });
+
+  emitMatchNotification(studentUserId, {
+    type: "MATCH",
+    matchId,
+    message: "You have a new match with a tutor.",
+  });
+
+  emitMatchNotification(tutorUserId, {
+    type: "MATCH",
+    matchId,
+    message: "You have a new match with a student.",
+  });
+};
 
 router.post("/", async (req: any, res: any) => {
   try {
-    //Get student ID from authenticated user
     const studentId = req.user.userId;
-    console.log("Student User ID:", studentId);
 
-    // Finding valid student
     const student = await prisma.student.findUnique({
       where: { studentId: studentId },
     });
@@ -24,19 +56,16 @@ router.post("/", async (req: any, res: any) => {
       return;
     }
 
-    // Get and validate tutor ID from request body
     const { tutorId } = req.body;
     if (!tutorId) {
       res.status(400).json({ message: "tutorId is required" });
       return;
     }
 
-    // Find tutor
     const tutor = await prisma.tutor.findUnique({
       where: { userId: tutorId },
     });
 
-    console.log(tutor, "tutor details");
     if (!tutor) {
       res
         .status(400)
@@ -44,7 +73,6 @@ router.post("/", async (req: any, res: any) => {
       return;
     }
 
-    // Check for existing match
     const existingMatch = await prisma.match.findFirst({
       where: {
         studentId: student.id,
@@ -61,7 +89,6 @@ router.post("/", async (req: any, res: any) => {
         return;
       }
 
-      // Update existing match
       const updatedMatch = await prisma.match.update({
         where: { id: existingMatch.id },
         data: {
@@ -72,6 +99,8 @@ router.post("/", async (req: any, res: any) => {
       });
 
       if (updatedMatch.tutorcon && updatedMatch.studentcon) {
+        await createMatchNotifications(student.studentId, tutor.userId, updatedMatch.id);
+
         res.json({
           message: "It's a match! Both parties have confirmed.",
           match: updatedMatch,
@@ -88,7 +117,6 @@ router.post("/", async (req: any, res: any) => {
       return;
     }
 
-    // Create new match
     const newMatch = await prisma.match.create({
       data: {
         tutorId: tutor.id,
@@ -99,7 +127,6 @@ router.post("/", async (req: any, res: any) => {
       },
     });
 
-    console.log("New match created:", newMatch);
     res.json({
       message: "Successfully showed interest in tutor",
       match: newMatch,
@@ -108,7 +135,6 @@ router.post("/", async (req: any, res: any) => {
   } catch (error) {
     console.error("Unexpected error in student interest endpoint:", error);
 
-    // Check if response was already sent
     if (!res.headersSent) {
       res.status(500).json({
         message: "An unexpected error occurred. Please try again later.",

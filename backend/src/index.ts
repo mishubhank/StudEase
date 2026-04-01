@@ -12,8 +12,11 @@ const userProfile = require("./routes/userProfile");
 const getAllTutions = require("./routes/getTutions");
 const getStudMatches = require("./routes/getStudMatches");
 const profilestatus = require("./routes/UserProfileStatus");
+import { initSocketServer } from "./socket";
+
 const port = 3000;
-const { Server } = require("socket.io");
+const wsPort = 5000;
+
 app.use(cors());
 app.use("/api/search", search);
 app.use("/api/auth/tutor", tutor);
@@ -28,24 +31,11 @@ app.use("/api/profile", profile);
 app.use("/api/listallStuds", getAllTutions);
 app.use("/api/user", profilestatus);
 
-//app.use('api/profile/:id',userProfile)
+initSocketServer(wsPort);
 
-import { CorsOptions } from "cors";
-
-const io = new Server(5000, {
-  cors: {
-    origin: "https://localhost:3000", // Allow connections only from this origin
-  },
-});
-
-io.on("connection", (socket: any) => {
-  console.log("server running  ");
-
-  socket.emit("welcome", { message: "Hi, welcome to the WebSocket server!" });
-  return { message: "hi" };
-});
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
+  console.log(`WebSocket server listening on port ${wsPort}`);
 });
 
 module.exports = app;
