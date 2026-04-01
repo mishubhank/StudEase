@@ -1,58 +1,53 @@
 generator client {
   provider = "prisma-client-js"
-} 
+}
 
 
- datasource db {
+datasource db {
   provider = "postgres"
   url      = env("DATABASE_URL")
- }
+}
 
-
- model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  name     String
-  profile Boolean @default(false)
-
-  tutor   Tutor?
-  student Student?
+model User {
+  id                    Int            @id @default(autoincrement())
+  email                 String         @unique
+  password              String
+  name                  String
+  profile               Boolean        @default(false)
+  tutor                 Tutor?
+  student               Student?
   sentNotifications     Notification[] @relation("SenderNotifications")
   receivedNotifications Notification[] @relation("RecipientNotifications")
 }
 
 model Tutor {
   id            Int        @id @default(autoincrement())
-  userId        Int        @unique 
+  userId        Int        @unique
   user          User       @relation(fields: [userId], references: [id])
   location      Location[]
   edu           Json?
   degree        String?
   specilization String?
-  subjects  Subject[]
-  active   Boolean @default(false)
-  profile Boolean @default(false)
-  
-  matches  Match[]
-  photo    String?
-  rating   Int?
+  subjects      Subject[]
+  active        Boolean    @default(false)
+  profile       Boolean    @default(false)
+  matches       Match[]
+  photo         String?
+  rating        Int?
 
   @@index([active])
- 
 }
 
 model Match {
-  id         Int     @id @default(autoincrement())
-  studentId  Int
-  tutorId    Int
-  student    Student @relation(fields: [studentId], references: [id])
-  tutor      Tutor   @relation(fields: [tutorId], references: [id])
-  studentcon Boolean @default(false)
-  tutorcon   Boolean @default(false)
-  status     Boolean @default(false)
-
- 
+  id            Int            @id @default(autoincrement())
+  studentId     Int
+  tutorId       Int
+  student       Student        @relation(fields: [studentId], references: [id])
+  tutor         Tutor          @relation(fields: [tutorId], references: [id])
+  studentcon    Boolean        @default(false)
+  tutorcon      Boolean        @default(false)
+  status        Boolean        @default(false)
+  notifications Notification[]
 
   @@unique([studentId, tutorId])
   @@index([status])
@@ -62,20 +57,18 @@ model Student {
   id         Int       @id @default(autoincrement())
   studentId  Int       @unique
   user       User      @relation(fields: [studentId], references: [id])
-  Area       String 
+  Area       String
   std        Int
-  subject  Subject[]
+  subject    Subject[]
   location   Location? @relation(fields: [locationId], references: [id])
   locationId Int?
   message    String
-  // rea       String?
   About      String
   postedON   DateTime
   slat       Float?
   slong      Float?
   matches    Match[]
-  profile Boolean @default(false)
-
+  profile    Boolean   @default(false)
 }
 
 model Location {
@@ -85,35 +78,36 @@ model Location {
   long    Float?
   tutor   Tutor     @relation(fields: [tutorId], references: [id])
   name    String
-  // Student   Student? @relation(fields: [studentId], references: [id])
-  // studentId Int?
-  // Student Student[]
   Student Student[]
 }
 
-
-
-
 model Notification {
-  id          Int      @id @default(autoincrement())
-  senderId    Int?     // ID of the user who sent the notification (optional)
-  recipientId Int      // ID of the user who receives the notification
-  sender      User?    @relation("SenderNotifications", fields: [senderId], references: [id])
-  recipient   User     @relation("RecipientNotifications", fields: [recipientId], references: [id])
-  content     String   // Content of the notification
-   type        String   // Type of notification (e.g., "message", "match", etc.)
-  isRead      Boolean  @default(false) // Whether the notification has been read
-  createdAt   DateTime @default(now()) // Timestamp when the notification was created
-
+  id          Int               @id @default(autoincrement())
+  senderId    Int?
+  recipientId Int
+  matchId     Int?
+  sender      User?             @relation("SenderNotifications", fields: [senderId], references: [id])
+  recipient   User              @relation("RecipientNotifications", fields: [recipientId], references: [id])
+  match       Match?            @relation(fields: [matchId], references: [id])
+  content     String
+  type        NotificationType  @default(MATCH)
+  isRead      Boolean           @default(false)
+  deliveredAt DateTime?
+  createdAt   DateTime          @default(now())
 
   @@index([recipientId])
+  @@index([matchId])
 }
 
-model Subject{
+enum NotificationType {
+  MATCH
+  MESSAGE
+  SYSTEM
+}
 
-  id          Int      @id @default(autoincrement())
-   subject  String
-  By  Tutor[] 
+model Subject {
+  id      Int       @id @default(autoincrement())
+  subject String
+  By      Tutor[]
   studs   Student[]
 }
- 
