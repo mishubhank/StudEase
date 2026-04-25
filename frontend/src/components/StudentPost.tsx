@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { MultiSelect } from "react-multi-select-component";
 import Select from "react-select";
 import { Blocks } from "react-loader-spinner";
@@ -7,6 +7,7 @@ import { Blocks } from "react-loader-spinner";
 
 import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { buildApiUrl } from "../lib/api";
 interface AreaOptions {
   label: string;
   value: string;
@@ -37,7 +38,6 @@ const StudentPost = () => {
   const [std, setStd] = useState<ClassOptions>({ label: "V", value: 5 });
   const [msg, setMsg] = useState<string>("");
   const [loader, setLoading] = useState<boolean>(false);
-  const [submit, setSubmit] = useState<boolean>(false);
   const PostFun = async (e: any) => {
     e.preventDefault();
     const token = localStorage.getItem("jwt");
@@ -47,7 +47,7 @@ const StudentPost = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/auth/student/post",
+        buildApiUrl("/api/auth/student/post"),
         {
           std: cls,
           Area: areax,
@@ -64,7 +64,7 @@ const StudentPost = () => {
       console.log(res);
 
       setLoading(false);
-      //  navigate("/student/dashboard");
+      navigate("/student/dashboard");
 
       return { message: "posteed the requiremetn" };
     } catch {
@@ -74,8 +74,6 @@ const StudentPost = () => {
       toast("Failed Posting Requirement");
     }
   };
-
-  const [location, setLocation] = useState({ lat: null, long: null });
 
   var optionss = {
     enableHighAccuracy: true,
@@ -106,7 +104,6 @@ const StudentPost = () => {
           console.log(result);
           if (result.state === "granted") {
             //If granted then you can directly call your function here
-            const a = navigator.geolocation.getCurrentPosition((pos) => {});
             navigator.geolocation.getCurrentPosition(success, errors, optionss);
           } else if (result.state === "prompt") {
             //If prompt then the user will be asked to give permission
@@ -120,12 +117,6 @@ const StudentPost = () => {
       console.log("Geolocation is not supported by this browser.");
     }
   }, []);
-
-  const [selected, setSelected] = useState([]);
-
-  function changeSel(selected: any) {
-    setSelected(selected);
-  }
 
   const options: ClassOptions[] = [
     { label: "I", value: 1 },
@@ -213,8 +204,6 @@ const StudentPost = () => {
   const handleClas = (selectedStd: any) => {
     setStd(selectedStd);
   };
-  function Submit() {}
-
   return (
     <>
       <div className="flex flex-col lg:flex-row min-h-screen">

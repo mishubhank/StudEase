@@ -58,7 +58,7 @@ router.post("/signup", async (req: any, res: any) => {
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email, role: "student" },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     return res.status(201).json({
@@ -89,9 +89,13 @@ router.post("/signin", async (req: any, res: any) => {
     if (!isValid) {
       return res.status(401).json({ message: "Invalid email or password 2" });
     }
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: "student" },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
     return res.status(200).json({ jwt: token });
   } catch (e) {
     return res.status(500).json({ message: "Failed to signin 3" });
@@ -138,11 +142,20 @@ router.post("/post", async (req: any, res: any) => {
         Area: Area || {},
         About: contact,
         message: message,
+        profile: true,
         subject: {
           create: subjects.map((subject: any) => ({
             subject: subject.name,
           })),
         },
+      },
+    });
+    await prisma.user.update({
+      where: {
+        id: studentId,
+      },
+      data: {
+        profile: true,
       },
     });
 
@@ -159,6 +172,10 @@ router.post("/post", async (req: any, res: any) => {
 router.post("/findstuds", async (req: any, res: any) => {
   const tutorID = req.body.tutorId;
   console.log(tutorID, "tutorr ID");
+  const subjectValues =
+    req.body.subjects || req.body.offerings || req.body.params?.offerings || [];
+  const areaValues =
+    req.body.Area || req.body.location || req.body.params?.location || [];
   const whereClause: any = {
     OR: [],
   };
@@ -174,28 +191,23 @@ router.post("/findstuds", async (req: any, res: any) => {
   //   });
   // }
 
-  const { Area, subjects } = req.body;
-  if (subjects && subjects.length > 0) {
+  if (subjectValues && subjectValues.length > 0) {
     whereClause.OR.push({
       subject: {
         some: {
           subject: {
-            in: subjects.name,
+            in: subjectValues.map((subject: any) => subject.value || subject.label || subject.name || subject),
             mode: "insensitive",
           },
         },
       },
     });
   }
-  if (Area && Area.length > 0) {
+  if (areaValues && areaValues.length > 0) {
     whereClause.OR.push({
-      location: {
-        some: {
-          name: {
-            in: Area.name,
-            mode: "insensitive",
-          },
-        },
+      Area: {
+        in: areaValues.map((area: any) => area.value || area.label || area.name || area),
+        mode: "insensitive",
       },
     });
   }
@@ -204,10 +216,17 @@ router.post("/findstuds", async (req: any, res: any) => {
 
   const students = await prisma.student.findMany({
     where: query,
-    include: {
+    select: {
+      id: true,
+      studentId: true,
+      Area: true,
+      std: true,
+      message: true,
+      postedON: true,
       user: true,
       location: true,
       subject: true,
+      matches: true,
     },
     orderBy: {
       postedON: "desc", // Show newest posts first
@@ -218,6 +237,7 @@ router.post("/findstuds", async (req: any, res: any) => {
 
 router.get("/profile-status", async (req: any, res: any) => {
   const userId = req.user.userId;
+
   {
     const profilestatus = await prisma.student.findFirst({
       where: {

@@ -52,7 +52,7 @@ model Match {
   tutorcon   Boolean @default(false)
   status     Boolean @default(false)
 
- 
+    
 
   @@unique([studentId, tutorId])
   @@index([status])
@@ -75,8 +75,10 @@ model Student {
   slong      Float?
   matches    Match[]
   profile Boolean @default(false)
+  ratings Int?
 
-}
+} 
+
 
 model Location {
   id      Int       @id @default(autoincrement())
@@ -107,7 +109,8 @@ model Notification {
 
 
   @@index([recipientId])
-}
+} 
+
 
 model Subject{
 

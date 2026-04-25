@@ -1,0 +1,29 @@
+/* MultiSelect Dark Mode Overrides */
+.rmsc {
+  --rmsc-main: #1e293b !important; /* Slate 800 */
+  --rmsc-hover: #334155 !important; /* Slate 700 */
+  --rmsc-bg: #0f172a !important; /* Slate 900 (Inside the dropdown) */
+  --rmsc-p: #94a3b8 !important; /* Slate 400 (Text) */
+  --rmsc-border: #334155 !important; /* Slate 700 */
+}
+
+/* Ensure the text inside the dropdown is actually visible */
+.rmsc .dropdown-container {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  border-radius: 12px !important;
+}
+
+.rmsc .dropdown-content {
+  background-color: #0f172a !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.rmsc .item-renderer {
+  color: #f1f5f9 !important; /* White/Slate 100 text */
+}
+
+.rmsc .item-renderer:hover {
+  background-color: #312e81 !important; /* Indigo 900 hover */
+}

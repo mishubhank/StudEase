@@ -1,23 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import express, { Request, Response } from "express";
+import { sendNotification } from "../../websocket";
 const middleware = require("../Auth/middleware");
-const { Server } = require("socket.io");
 const prisma = new PrismaClient();
 const router = express.Router();
-
-// Apply middleware
-const io = new Server(5001, {
-  cors: {
-    origin: "https://localhost:3000", // Allow connections only from this origin
-  },
-});
-
-io.on("connection", (socket: any) => {
-  console.log("server running  ");
-
-  socket.emit("welcome", { message: "Hi, welcome to the WebSocket server!" });
-  return { message: "hi" };
-});
 
 router.use(middleware);
 
@@ -38,6 +24,13 @@ const sayyes = router.post("/", async (req: any, res: any) => {
     const tutor = await prisma.tutor.findUnique({
       where: {
         userId: tutorId,
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
     console.log("inside /int route", tutor?.userId);
@@ -118,9 +111,26 @@ const sayyes = router.post("/", async (req: any, res: any) => {
         });
 
         console.log("Match updated:", updatedMatch);
+        const notification = await prisma.notification.create({
+          data: {
+            senderId: tutor.userId,
+            recipientId: student.studentId,
+            content: `It's a match! ${tutor.user.name} accepted your tuition request.`,
+            type: "match",
+          },
+        });
+        const io = req.app.get("io");
+        sendNotification(
+          student.studentId.toString(),
+          io,
+          notification.content,
+          notification
+        );
+
         return res.json({
           message: "Match completed successfully!",
           match: updatedMatch,
+          notification,
         });
       }
     } catch (error) {
@@ -143,9 +153,26 @@ const sayyes = router.post("/", async (req: any, res: any) => {
       });
 
       console.log("New match created:", newMatch);
+      const notification = await prisma.notification.create({
+        data: {
+          senderId: tutor.userId,
+          recipientId: student.studentId,
+          content: `${tutor.user.name} applied for your tuition request.`,
+          type: "tutor_application",
+        },
+      });
+      const io = req.app.get("io");
+      sendNotification(
+        student.studentId.toString(),
+        io,
+        notification.content,
+        notification
+      );
+
       return res.json({
         message: "Successfully showed interest in student",
         match: newMatch,
+        notification,
       });
     } catch (error: any) {
       console.error("Error creating new match:", error);

@@ -1,5 +1,7 @@
 import app from "./app";
-var cors = require("cors");
+import http from "http";
+import socketConnection from "../websocket";
+import { assertRequiredEnv, port, socketCorsOptions } from "./config";
 const tutor = require("./routes/tutor");
 const student = require("./routes/stud");
 const interested = require("./routes/tutorinterest");
@@ -12,9 +14,12 @@ const userProfile = require("./routes/userProfile");
 const getAllTutions = require("./routes/getTutions");
 const getStudMatches = require("./routes/getStudMatches");
 const profilestatus = require("./routes/UserProfileStatus");
-const port = 3000;
+const notifications = require("./routes/notifications");
+const contact = require("./routes/contact");
 const { Server } = require("socket.io");
-app.use(cors());
+
+assertRequiredEnv();
+
 app.use("/api/search", search);
 app.use("/api/auth/tutor", tutor);
 app.use("/api/auth/student", student);
@@ -27,25 +32,21 @@ app.use("/api/userProfile", userProfile);
 app.use("/api/profile", profile);
 app.use("/api/listallStuds", getAllTutions);
 app.use("/api/user", profilestatus);
+app.use("/api/notifications", notifications);
+app.use("/api/contact", contact);
 
 //app.use('api/profile/:id',userProfile)
-
-import { CorsOptions } from "cors";
-
-const io = new Server(5000, {
-  cors: {
-    origin: "https://localhost:3000", // Allow connections only from this origin
-  },
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: socketCorsOptions,
 });
 
+app.set("io", io);
 io.on("connection", (socket: any) => {
   console.log("server running  ");
-
+  socketConnection(socket);
   socket.emit("welcome", { message: "Hi, welcome to the WebSocket server!" });
-  return { message: "hi" };
 });
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Server listening on port ${port}`);
 });
-
-module.exports = app;

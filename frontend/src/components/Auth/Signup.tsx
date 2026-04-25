@@ -1,13 +1,12 @@
 /// USELESS_________________
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Header from "../Header";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { buildApiUrl } from "../../lib/api";
 
 export const Signup = () => {
-  const { role } = useParams();
-  console.log(role);
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -18,7 +17,7 @@ export const Signup = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:3000/api/auth/tutor/signup`,
+        buildApiUrl("/api/auth/tutor/signup"),
         {
           name,
           email,

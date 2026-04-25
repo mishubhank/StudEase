@@ -14,10 +14,23 @@ router.get("/profile-status", async (req: any, res: any) => {
       where: {
         id: user,
       },
-      select: { profile: true },
+      select: {
+        profile: true,
+        tutor: {
+          select: {
+            id: true,
+          },
+        },
+        student: {
+          select: {
+            id: true,
+          },
+        },
+      },
     });
+    const hasProfile = Boolean(userPro?.profile || userPro?.tutor || userPro?.student);
     return res.json({
-      profilesattus: userPro?.profile,
+      profilesattus: hasProfile,
     });
   } catch {
     return res.json({ msg: "failed to find status" });

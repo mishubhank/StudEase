@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import axios from "axios";
 import { MultiSelect } from "react-multi-select-component";
+import { buildApiUrl } from "../lib/api";
 
-interface Location {
-  name: string;
-}
 interface AreaOptions {
+  label: string;
+  value: string;
+}
+interface SubjectOption {
   label: string;
   value: string;
 }
@@ -15,6 +17,7 @@ interface AreaOptions {
 const TutorPost = () => {
   const navigate = useNavigate();
   const [locations, setLocations] = useState<AreaOptions[]>([]);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [deg, setDeg] = useState("");
   const [spec, setSpec] = useState("");
   const [pic, setPic] = useState<File | null>(null);
@@ -34,13 +37,13 @@ const TutorPost = () => {
   //   setLocations((prev) => [...prev, newLoc]);
   // };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setPic(e.target.files[0]);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
 
     switch (id) {
@@ -55,10 +58,10 @@ const TutorPost = () => {
     }
   };
 
-  const submitForm = async (e: React.FormEvent) => {
+  const submitForm = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!deg || !spec || locations.length === 0 || !pic) {
+    if (!deg || !spec || locations.length === 0 || subjects.length === 0 || !pic) {
       alert("All fields are required!");
       return;
     }
@@ -72,13 +75,14 @@ const TutorPost = () => {
         degree: deg,
         specilization: spec,
         location: locationsForBackend,
+        subjects: subjects.map((subject) => ({ name: subject.value })),
       })
     );
     console.log("form data is", formData);
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/auth/tutor/post",
+        buildApiUrl("/api/auth/tutor/post"),
         formData,
         {
           headers: {
@@ -160,6 +164,19 @@ const TutorPost = () => {
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5"
             placeholder="Enter your specialization (e.g., Data Science)"
           />
+          <label
+            htmlFor="subjects"
+            className="block mt-4 mb-2 text-sm font-medium text-gray-700"
+          >
+            Subjects
+          </label>
+          <MultiSelect
+            className="w-full"
+            options={subjectOptions}
+            value={subjects}
+            onChange={setSubjects}
+            labelledBy="Select subjects"
+          />
           {/* File Upload */}
           <label
             htmlFor="file_input"
@@ -239,5 +256,26 @@ const areas: AreaOptions[] = [
   { label: "Chhota Fuhara", value: "chhota_fuhara" },
   { label: "Bada Fuhara", value: "bada_fuhara" },
   { label: "Baldeo Bagh", value: "baldeo_bagh" },
+];
+const subjectOptions: SubjectOption[] = [
+  { label: "Physics", value: "Physics" },
+  { label: "Chemistry", value: "Chemistry" },
+  { label: "Maths", value: "Maths" },
+  { label: "English", value: "English" },
+  { label: "Biology", value: "Biology" },
+  { label: "History", value: "History" },
+  { label: "Geography", value: "Geography" },
+  { label: "Computer Science", value: "Computer Science" },
+  { label: "Economics", value: "Economics" },
+  { label: "Political Science", value: "Political Science" },
+  { label: "Psychology", value: "Psychology" },
+  { label: "Sociology", value: "Sociology" },
+  { label: "Business Studies", value: "Business Studies" },
+  { label: "Accountancy", value: "Accountancy" },
+  { label: "Statistics", value: "Statistics" },
+  { label: "Law", value: "Law" },
+  { label: "Astronomy", value: "Astronomy" },
+  { label: "Literature", value: "Literature" },
+  { label: "Engineering Graphics", value: "Engineering Graphics" },
 ];
 export default TutorPost;

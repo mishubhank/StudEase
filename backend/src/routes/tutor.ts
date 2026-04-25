@@ -1,7 +1,5 @@
 // import { create } from "domain";
 
-import { subscribe } from "diagnostics_channel";
-
 // import { Request,Response } from "express";
 const express = require("express");
 const router = express.Router();
@@ -10,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const auth = require("../Auth/middleware");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+import * as z from "zod";
 
 const image = require("./upload");
 
@@ -30,10 +29,21 @@ interface Subject {
   name: string;
   userId: number;
 }
+const TutorSchema = z.object({
+  name: z.string().min(1, "Name is needed"),
 
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(3, "Password is need"),
+});
 router.post("/signup", async (req: any, res: any) => {
   const { name, email, password } = req.body;
-
+  const parse = TutorSchema.safeParse(req.body);
+  if (parse.error) {
+    return res.status(400).json({
+      success: false,
+      message: "invalid input please check again ",
+    });
+  }
   // Input validation
   if (!name || !email || !password) {
     return res.status(400).json({
@@ -73,7 +83,7 @@ router.post("/signup", async (req: any, res: any) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email, role: "tutor" },
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
     );
 
     return res.status(201).json({
@@ -104,7 +114,11 @@ router.post("/signin", async (req: any, res: any) => {
     if (!isValid) {
       return res.status(401).json({ message: "Invalid email or password 2" });
     }
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {});
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: "tutor" },
+      process.env.JWT_SECRET,
+      {}
+    );
     return res.status(200).json({ jwt: token });
   } catch (e) {
     return res.status(500).json({ message: "Failed to signin 3" });
@@ -144,19 +158,21 @@ router.post("/post", image.single("tutorimage"), async (req: any, res: any) => {
     });
   }
 
-  console.log("subjectbbbbbbb", subjects);
+  console.log("subjectb", subjects);
   {
     const tutor = await prisma.tutor.create({
       data: {
         userId: userId || {}, // Ensure userId is a valid value, not an empty object
         edu: edu || {}, // Ensure edu is a valid value, not an empty object
         active: true,
+        profile: true,
         degree: degree || {}, // Ensure degree is a valid value, not an empty object
         specilization: specilization || {}, // Ensure specilization is a valid value, not an empty object
         photo: imageUrl,
         subjects: {
-          // Use `create` instead of `createMany` for nested relations
-          create: [],
+          create: (subjects || []).map((subject: any) => ({
+            subject: subject.name || subject.label || subject.value || subject,
+          })),
         },
         location: {
           // Use `create` instead of `createMany` for nested relations
@@ -164,6 +180,14 @@ router.post("/post", image.single("tutorimage"), async (req: any, res: any) => {
             name: loc.name,
           })),
         },
+      },
+    });
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        profile: true,
       },
     });
 
@@ -209,28 +233,34 @@ router.post("/tutprofile/review/", (req: any, res: any) => {
 router.post("/findtutor", async (req: any, res: any) => {
   const { locations, offering } = req.body;
   console.log(offering, "offering", locations, "locations");
+  const locationValues = Array.isArray(locations)
+    ? locations.map((loc) => loc.value || loc.label || loc)
+    : [];
+  const subjectValues = Array.isArray(offering)
+    ? offering.map((subj) => subj.value || subj.label || subj)
+    : [];
 
   const whereClause: any = {
     OR: [],
   };
-  if (locations && Array.isArray(locations) && locations.length > 0) {
+  if (locationValues.length > 0) {
     whereClause.OR.push({
       location: {
         some: {
           name: {
-            in: locations.map((loc) => loc.value),
+            in: locationValues,
             mode: "insensitive",
           },
         },
       },
     });
   }
-  if (offering && Array.isArray(offering) && offering.length > 0) {
+  if (subjectValues.length > 0) {
     whereClause.OR.push({
       subjects: {
         some: {
           subject: {
-            in: offering.map((subj) => subj.value),
+            in: subjectValues,
             mode: "insensitive",
           },
         },
@@ -238,11 +268,26 @@ router.post("/findtutor", async (req: any, res: any) => {
     });
   }
   const query = whereClause.OR.length === 0 ? {} : whereClause;
+  const student = await prisma.student.findUnique({
+    where: {
+      studentId: req.user.userId,
+    },
+  });
   const filterTuts = await prisma.tutor.findMany({
     where: query,
     include: {
       location: true,
       subjects: true,
+      matches: {
+        where: {
+          studentId: student?.id || 0,
+        },
+        select: {
+          tutorcon: true,
+          studentcon: true,
+          status: true,
+        },
+      },
     },
     take: 8,
   });

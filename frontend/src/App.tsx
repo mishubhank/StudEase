@@ -10,8 +10,8 @@ import Sidebar from "./components/Sidebar";
 //import TutorCard from "./components/TutorCard"
 import { ProfilePage } from "./components/ProfilePage";
 import TutorPost from "./components/TutorPost";
-import TutorDash from "./components/TutorDash";
 import StudentList from "./components/all_students";
+import ContactPage from "./components/ContactPage";
 // import StudentCard from "./components/StudentCard";
 import HomePage from "./components/HomePage";
 import StudentLogin from "./components/Auth/studentLogin";
@@ -36,6 +36,7 @@ function App() {
           <Route path="/profile/:userId" element={<ProfilePage />} />
           {/* <Route path="/tutor/dashboard" element={<TutorDash />} /> */}
           <Route path="/tutor/dashboard" element={<StudentList />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/tutor/login" element={<TutorLogin />} />
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/student/signup" element={<StudentSign />} />

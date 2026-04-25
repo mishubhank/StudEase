@@ -2,6 +2,7 @@ import { useState } from "react";
 //import Header from "../Header";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { buildApiUrl } from "../../lib/api";
 
 export const StudentSignup = () => {
   const { role } = useParams();
@@ -16,7 +17,7 @@ export const StudentSignup = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:3000/api/auth/student/signup`,
+        buildApiUrl("/api/auth/student/signup"),
         {
           name,
           email,

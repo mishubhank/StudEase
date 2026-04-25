@@ -1,26 +1,10 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { buildApiUrl } from "../lib/api";
 //import {} from '../assets/location-sign-svgrepo-com.svg'
 
-interface Tutor {
-  about: string;
-  photo: string;
-  edu: {
-    year: number;
-    specialization: string;
-    degree: string;
-  };
-  offering: string;
-  rating: number;
-  count: number;
-  location: string;
-}
-
 export const ProfilePage = () => {
-  const loggedIn = false;
-  const [res, setResponse] = useState<Tutor | null>(null);
-  //bool loggedIn=false;
   const params = useParams();
   const userId = params.userId;
 
@@ -29,9 +13,8 @@ export const ProfilePage = () => {
       //   console.log(params.userId);
       try {
         const profile = await axios.get(
-          `http://localhost:3000/api/userProfile/${userId}`
+          buildApiUrl(`/api/userProfile/${userId}`),
         );
-        setResponse(profile.data);
         console.log(profile.data);
       } catch (e) {
         return { message: "error fetching profile" };

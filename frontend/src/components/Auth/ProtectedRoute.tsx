@@ -1,10 +1,9 @@
 import { jwtDecode } from "jwt-decode";
-import React, { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Props } from "react-select";
 interface props {
-  children: React.ReactNode;
-  role: string;
+  children: ReactNode;
+  role: string | string[];
 }
 
 const ProtectedRoute = ({ children, role }: props) => {
@@ -19,14 +18,15 @@ const ProtectedRoute = ({ children, role }: props) => {
     try {
       const decode: any = jwtDecode(token as string);
       console.log(decode.role, "checking the role dfrom token");
-      if (decode.role !== role) {
+      const allowedRoles = Array.isArray(role) ? role : [role];
+      if (!allowedRoles.includes(decode.role)) {
         navigate("/home");
       }
     } catch (e) {
       console.log(e);
       navigate("/home");
     }
-  }, [navigate]);
+  }, [navigate, role]);
 
   return <div>{children}</div>;
 };

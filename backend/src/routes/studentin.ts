@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import express from "express";
 const middleware = require("../Auth/middleware");
 
+import { sendNotification } from "../../websocket/index";
 const prisma = new PrismaClient();
 const router = express.Router();
 
@@ -17,6 +18,13 @@ router.post("/", async (req: any, res: any) => {
     // Finding valid student
     const student = await prisma.student.findUnique({
       where: { studentId: studentId },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
 
     if (!student) {
@@ -34,6 +42,13 @@ router.post("/", async (req: any, res: any) => {
     // Find tutor
     const tutor = await prisma.tutor.findUnique({
       where: { userId: tutorId },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
     });
 
     console.log(tutor, "tutor details");
@@ -72,17 +87,50 @@ router.post("/", async (req: any, res: any) => {
       });
 
       if (updatedMatch.tutorcon && updatedMatch.studentcon) {
+        const notification = await prisma.notification.create({
+          data: {
+            senderId: student.studentId,
+            recipientId: tutor.userId,
+            content: `It's a match! ${student.user.name} accepted your tuition request.`,
+            type: "match",
+          },
+        });
+        const socket = req.app.get("io");
+        sendNotification(
+          tutor.userId.toString(),
+          socket,
+          notification.content,
+          notification,
+        );
+
         res.json({
           message: "It's a match! Both parties have confirmed.",
           match: updatedMatch,
           status: "matched",
+          notification,
         });
       } else {
+        const notification = await prisma.notification.create({
+          data: {
+            senderId: student.studentId,
+            recipientId: tutor.userId,
+            content: `${student.user.name} sent you a tuition request.`,
+            type: "student_application",
+          },
+        });
+        const socket = req.app.get("io");
+        sendNotification(
+          tutor.userId.toString(),
+          socket,
+          notification.content,
+          notification,
+        );
         res.json({
           message:
             "Successfully showed interest. Waiting for tutor to confirm.",
           match: updatedMatch,
           status: "Match sent waiting for response",
+          notification,
         });
       }
       return;
@@ -100,10 +148,27 @@ router.post("/", async (req: any, res: any) => {
     });
 
     console.log("New match created:", newMatch);
+    const notification = await prisma.notification.create({
+      data: {
+        senderId: student.studentId,
+        recipientId: tutor.userId,
+        content: `${student.user.name} sent you a tuition request.`,
+        type: "student_application",
+      },
+    });
+    const socket = req.app.get("io");
+    sendNotification(
+      tutor.userId.toString(),
+      socket,
+      notification.content,
+      notification,
+    );
+
     res.json({
       message: "Successfully showed interest in tutor",
       match: newMatch,
       status: "pending",
+      notification,
     });
   } catch (error) {
     console.error("Unexpected error in student interest endpoint:", error);

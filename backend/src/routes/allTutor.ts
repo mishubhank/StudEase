@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import express, { Request, Response } from "express";
-// const middleware = require('../Auth/middleware');
+const middleware = require("../Auth/middleware");
 
 import { createClient } from "redis";
 
@@ -26,6 +26,7 @@ import { createClient } from "redis";
 
 const prisma = new PrismaClient();
 const router = express.Router();
+router.use(middleware);
 
 const givealltutor = router.get("/", async (req: any, res: any) => {
   const limit = Number(req.query.limit) || 6;
@@ -40,16 +41,37 @@ const givealltutor = router.get("/", async (req: any, res: any) => {
     return res.json({ cachedData });
   }
   const skip = (page - 1) * limit;
+  const student = await prisma.student.findUnique({
+    where: {
+      studentId: req.user.userId,
+    },
+  });
+  const total = await prisma.tutor.count();
   const allTutor = await prisma.tutor.findMany({
     skip: skip,
     take: limit,
     include: {
       location: true,
+      subjects: true,
+      matches: {
+        where: {
+          studentId: student?.id || 0,
+        },
+        select: {
+          tutorcon: true,
+          studentcon: true,
+          status: true,
+        },
+      },
     },
   });
   // await client.set(key, JSON.stringify(allTutor), { EX: 60 * 5 });
   return res.json({
     allTutor,
+    page,
+    limit,
+    total,
+    hasNext: skip + allTutor.length < total,
   });
 });
 module.exports = givealltutor;

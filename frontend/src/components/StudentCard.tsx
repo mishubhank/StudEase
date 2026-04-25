@@ -1,143 +1,149 @@
-import React, { JSXElementConstructor, FC } from "react";
-import { CiLocationOn } from "react-icons/ci";
-import { CiCalendarDate } from "react-icons/ci";
-import { DiVim } from "react-icons/di";
-import { PiStudent } from "react-icons/pi";
+import { type FC } from "react";
+import { CiLocationOn, CiCalendarDate } from "react-icons/ci";
+import {
+  PiStudent,
+  PiConfettiFill,
+  PiBookOpenTextBold,
+  PiArrowRightBold,
+} from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
-import { PiConfettiFill } from "react-icons/pi";
-interface student {
+
+interface studentProps {
   std: number;
   Area: string;
   PostedOn: Date;
   About: string;
   Subject: string;
   studentId: number;
-
   matches: {
     tutorcon: boolean;
     studentcon: boolean;
     status: boolean;
   };
-
   onDetails: () => void;
   onApply: () => void;
 }
 
-const StudentCard: FC<student> = ({
+const StudentCard: FC<studentProps> = ({
   std,
   Area,
   PostedOn,
   About,
   matches,
-
   Subject,
+  studentId,
   onApply,
   onDetails,
-}: student): JSX.Element => {
-  const getButtonText = () => {
-    if (matches.status == true) return "Matched";
-    if (matches.tutorcon == true && matches.studentcon == false)
-      return "Applied";
-    if (matches.studentcon == true && matches.tutorcon == false)
-      return "Respond";
-    return "Apply";
-  };
-
-  const getButtonStyles = () => {
-    if (matches.status == true) return "bg-primary   ";
-    else if (matches.tutorcon == true && matches.studentcon == false) {
-      return "bg-yellow-500 hover:bg-yellow-600";
-    } else if (matches.studentcon == true) {
-      return " bg-green-500 hover:bg-green-600";
-    }
-    return "bg-primary hover:bg-primary/90 border-2 border-black ";
-  };
+}) => {
   const navigate = useNavigate();
-  const Match = (status: boolean) => {
-    if (status) {
-      return (
-        <>
-          <button
-            // disabled
 
-            onClick={() => navigate("/contact")}
-            className=" flex items-center justify-center font-mono  pr-2 pl-2 border-black border-2"
-          >
-            {" "}
-            <PiConfettiFill />
-            Contact{" "}
-          </button>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <button
-            disabled
-            // disabled
-
-            onClick={() => navigate("/contact")}
-            className="font-mono  pr-2 pl-2 border-black border-2"
-          >
-            {" "}
-            Contact{" "}
-          </button>
-        </>
-      );
-    }
+  // Helper for dynamic status button
+  const getStatusConfig = () => {
+    if (matches.status)
+      return {
+        text: "Matched",
+        styles: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      };
+    if (matches.tutorcon && !matches.studentcon)
+      return {
+        text: "Applied",
+        styles: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      };
+    if (matches.studentcon && !matches.tutorcon)
+      return {
+        text: "Respond",
+        styles: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      };
+    return {
+      text: "Apply Now",
+      styles:
+        "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20",
+    };
   };
+
+  const config = getStatusConfig();
+  const dateStr = new Date(PostedOn).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
 
   return (
-    <div className="">
-      <div className="h-81 w-72 flex flex-col items-center justify-center bg-blue-300  m-6 rounded-lg shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl hover:bg-[#f9f9f9] space-y-2">
-        <div className="flex items-center space-x-4 ">
-          <div className="">
-            {" "}
-            <PiStudent />{" "}
+    <div className="relative group">
+      {/* Subtle Glow on Hover */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-3xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
+
+      <div className="relative h-full w-full bg-[#0f172a] border border-slate-800 p-6 rounded-3xl flex flex-col hover:border-slate-700 transition-all duration-300 shadow-2xl">
+        {/* Header: Grade & Subject */}
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 text-emerald-400 mb-1">
+              <PiBookOpenTextBold size={18} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">
+                {Subject || "General"}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-white tracking-tight">
+              Grade {std}th
+            </h3>
           </div>
-          <div className=" border-slate-400 text-2xl font-medium">
-            {" "}
-            Standard- {`${std}`}th{" "}
+          <div className="bg-slate-800/50 p-2.5 rounded-xl text-slate-400">
+            <PiStudent size={24} />
           </div>
-        </div>
-        <div className="flex items-center text-gray-700">
-          <CiLocationOn />
-          {Area}
-        </div>
-        <div className="flex items-center m-2 text-gray-500 justify-center border-1 border-slate-500">
-          <div className="flex items-center min-h-8 min-w-8 font-bold">
-            <div className="font-bold text-black">PostedOn</div>
-            <CiCalendarDate />{" "}
-          </div>{" "}
-          {`${PostedOn}`}
-        </div>
-        <div className="flex items-center overflow-y-scroll m-3 text-sm text-gray-600 h-16">
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aut ipsum
-          omnis quo maiores illo cupiditate laborum, necessitatibus aliquam modi
-          nam doloribus, tempore a repudiandae, quibusdam sed consequuntur nisi
-          ducimus ad.
-        </div>
-        <div className="h-1/6 w-full flex justify-center space-x-8 m-">
-          <button
-            className="rounded-lg bg-slate-100 w-1/3 py-1 hover:bg-slate-200 hover:text-gray-900 transition-colors"
-            onClick={onDetails}
-          >
-            Details
-          </button>
-          <button
-            className={`w-1/3 rounded-xl ${getButtonStyles()}`}
-            onClick={onApply}
-          >
-            {getButtonText()}
-          </button>
         </div>
 
-        <div className="  flex w-full justify-center  bg-pink-100 h-10 items-center">
-          {" "}
-          {Match(matches.status)}
+        {/* Details: Location & Date */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/50 rounded-full border border-slate-800 text-xs text-slate-400 font-medium">
+            <CiLocationOn className="text-emerald-500" />
+            {Area}
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/50 rounded-full border border-slate-800 text-xs text-slate-400 font-medium">
+            <CiCalendarDate className="text-indigo-400" />
+            {dateStr}
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-slate-500 text-sm leading-relaxed mb-8 line-clamp-3">
+          {About ||
+            "The student is looking for a dedicated tutor to help with core concepts and exam preparation. High commitment required."}
+        </p>
+
+        {/* Actions */}
+        <div className="mt-auto space-y-3">
+          <div className="flex gap-2">
+            <button
+              onClick={onDetails}
+              className="flex-1 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-slate-700"
+            >
+              View Details
+            </button>
+            <button
+              onClick={onApply}
+              disabled={matches.tutorcon || matches.status}
+              className={`flex-[1.5] px-4 py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${config.styles}`}
+            >
+              {config.text}
+              {!matches.tutorcon && <PiArrowRightBold />}
+            </button>
+          </div>
+
+          {/* Contact Section - Only visible when matched */}
+          <div
+            className={`overflow-hidden transition-all duration-500 ${matches.status ? "max-h-20 opacity-100" : "max-h-0 opacity-0"}`}
+          >
+            <button
+              onClick={() => navigate(`/contact?studentId=${studentId}`)}
+              className="w-full py-3 bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-indigo-600 hover:text-white transition-all shadow-inner"
+            >
+              <PiConfettiFill size={16} />
+              Unlock Contact Info
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default StudentCard;

@@ -1,29 +1,48 @@
-import { jwtDecode } from "jwt-decode";
-import React, { useState } from "react";
+interface PagesProps {
+  page: number;
+  hasNext: boolean;
+  onPageChange: (page: number) => void;
+}
 
-const Pages = () => {
-  const [page, setPage] = useState<Number>(1);
-  let pages;
-  const token = localStorage.getItem("jwt");
-  const decoded: any = jwtDecode(token as string);
-  const role = decoded.role;
+const Pages = ({ page, hasNext, onPageChange }: PagesProps) => {
+  const pages = [Math.max(1, page - 1), page, page + 1].filter(
+    (value, index, list) => list.indexOf(value) === index,
+  );
 
   return (
-    <div>
-      <div className="flex h-10 items-center justify-center  bg-blue-200  space-x-2 flex-row ">
-        <div className=" cursor-pointer border border-gray-500 px-3 py-1 rounded">
-          1
-        </div>
-        <div className="cursor-pointer border border-gray-500 px-3 py-1 rounded">
-          2
-        </div>
-        <div className="border cursor-pointer border-gray-500 px-3 py-1 rounded">
-          3
-        </div>
-        <div className="cursor pointer border border-gray-500 px-3 py-1 rounded">
-          4
-        </div>
-      </div>
+    <div className="flex items-center justify-center gap-2">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={() => onPageChange(page - 1)}
+        className="h-10 px-4 rounded-lg border border-slate-700 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        Prev
+      </button>
+
+      {pages.map((pageNumber) => (
+        <button
+          type="button"
+          key={pageNumber}
+          onClick={() => onPageChange(pageNumber)}
+          className={`h-10 min-w-10 px-3 rounded-lg border text-sm font-bold transition-colors ${
+            pageNumber === page
+              ? "border-emerald-500 bg-emerald-500 text-slate-950"
+              : "border-slate-700 text-slate-300 hover:bg-slate-800"
+          }`}
+        >
+          {pageNumber}
+        </button>
+      ))}
+
+      <button
+        type="button"
+        disabled={!hasNext}
+        onClick={() => onPageChange(page + 1)}
+        className="h-10 px-4 rounded-lg border border-slate-700 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        Next
+      </button>
     </div>
   );
 };

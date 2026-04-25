@@ -1,16 +1,31 @@
-import React, { FC, useState } from "react";
-import { IoStar } from "react-icons/io5"; // Full star
-import { FaStar, FaStarHalf } from "react-icons/fa"; // Half star and empty star
+import { type FC, useState } from "react";
+import { IoStar } from "react-icons/io5";
+import { FaStar, FaStarHalf } from "react-icons/fa";
+import {
+  PiMapPinFill,
+  PiCertificateFill,
+  PiPaperPlaneTiltFill,
+  PiConfettiFill,
+} from "react-icons/pi";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
+import { buildApiUrl } from "../lib/api";
+
 interface TutorProfile {
   image: string;
   reviews: number;
   offerings: string;
-  rating: number; // Add rating to the profile
+  rating: number;
   subject: string;
   degree: string;
   tutorId: number;
+  canApply?: boolean;
+  onRequireProfile?: () => void;
+  matches?: {
+    tutorcon: boolean;
+    studentcon: boolean;
+    status: boolean;
+  };
   location: {
     name: string[];
   }[];
@@ -21,43 +36,15 @@ const renderRatings = (rating: number) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
 
-  // Create full stars
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(
-      <span
-        key={`full-${i}`}
-        className="flex items-center justify-center text-yellow-500"
-      >
-        <IoStar />
-      </span>
-    );
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) {
+      stars.push(<IoStar key={i} className="text-amber-400" />);
+    } else if (i === fullStars && hasHalfStar) {
+      stars.push(<FaStarHalf key={i} className="text-amber-400" />);
+    } else {
+      stars.push(<FaStar key={i} className="text-slate-700" />);
+    }
   }
-
-  // Add half star if applicable
-  if (hasHalfStar) {
-    stars.push(
-      <span
-        key="half"
-        className="flex items-center justify-center text-yellow-500"
-      >
-        <FaStarHalf />
-      </span>
-    );
-  }
-
-  // Add empty stars if needed (Assuming 5 stars as max)
-  const emptyStars = 5 - stars.length;
-  for (let i = 0; i < emptyStars; i++) {
-    stars.push(
-      <span
-        key={`empty-${i}`}
-        className="flex items-center justify-center text-gray-300"
-      >
-        <FaStar />
-      </span>
-    );
-  }
-
   return stars;
 };
 
@@ -66,68 +53,127 @@ const TutorCard: FC<TutorProfile> = ({
   reviews,
   offerings,
   rating,
-  subject,
   degree,
   location,
   tutorId,
-}): JSX.Element => {
-  const token: any = localStorage.getItem("jwt");
-  // get tutordid from the backend
-  const decode: any = jwtDecode(token as string);
-  console.log(decode.role, "checking the role dfrom token");
+  canApply = true,
+  onRequireProfile,
+  matches,
+}) => {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("jwt");
+  const [state, setState] = useState(
+    matches?.status ? "Matched" : matches?.studentcon ? "Applied" : "Connect",
+  );
+  const [isHovered, setIsHovered] = useState(false);
+  const isMatched = Boolean(matches?.status || state === "Matched");
 
-  const [state, setState] = useState("contact");
   const SendMatch = async () => {
-    try {
-      const status = await axios.post(
-        "http://localhost:3000/api/student/interested",
-
-        {
-          tutorId: tutorId,
-        },
-
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setState("Applied");
-      console.log("matche send", status.data);
-    } catch {
-      console.log("error in sending the match");
+    if (!canApply) {
+      onRequireProfile?.();
       return;
+    }
+
+    setState("Sending...");
+    try {
+      await axios.post(
+        buildApiUrl("/api/student/interested"),
+        { tutorId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setState(matches?.tutorcon ? "Matched" : "Applied");
+    } catch (err) {
+      console.error("Match error", err);
+      setState("Connect");
     }
   };
 
   return (
-    <div className="bg-white border-2 border-black flex flex-col items-center h-80 w-64 rounded-2xl justify-center m-10 font-mono p-4">
-      <img
-        className=" object-cover w-full h-32 rounded-md mb-4"
-        src={image}
-        alt="Tutor"
-      />
-      <h3 className="text-lg font-semibold">{reviews} </h3>
-      <h3 className="text-sm text-gray-700">{offerings}</h3>
-      <div className="flex justify-normal items-center ">
-        {renderRatings(rating)}
-      </div>
-      <div>{degree}</div>
+    <div
+      className="relative group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Background Glow */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-[2rem] blur opacity-10 group-hover:opacity-30 transition duration-500"></div>
 
-      {location.length > 0 && (
-        <div className="flex flex-crow items-center space-x-2">
-          {location.map((item) => (
-            <h2> {item.name}</h2>
-          ))}{" "}
+      <div className="relative bg-[#0f172a] border border-slate-800 p-5 rounded-[2rem] flex flex-col h-full w-72 transition-all duration-300 group-hover:border-indigo-500/50 shadow-xl">
+        {/* Tutor Image Wrapper */}
+        <div className="relative h-44 w-full rounded-2xl overflow-hidden mb-4">
+          <img
+            className={`object-cover w-full h-full transition-transform duration-700 ${isHovered ? "scale-110" : "scale-100"}`}
+            src={image || "https://via.placeholder.com/150"}
+            alt="Tutor"
+          />
+          <div className="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-700 flex items-center gap-1">
+            <IoStar className="text-amber-400 text-xs" />
+            <span className="text-[10px] font-bold text-white">
+              {rating || 5.0}
+            </span>
+          </div>
         </div>
-      )}
-      <button
-        onClick={SendMatch}
-        className=" flex items-center  w-full h-6  space-x-4 justify-center bg-orange-400 rounded-xl "
-      >
-        {state}
-        <span>{subject}</span>
-      </button>
+
+        {/* Content */}
+        <div className="space-y-3">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+              {offerings || "Expert Tutor"}
+            </span>
+            <h3 className="text-lg font-bold text-white truncate">
+              Prof. {degree}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2 text-slate-400 text-xs">
+            <PiCertificateFill className="text-indigo-500" />
+            <span className="truncate">{degree} Specialist</span>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+            {location.slice(0, 2).map((item, i) => (
+              <span
+                key={i}
+                className="flex items-center gap-1 text-[10px] bg-slate-800/50 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700"
+              >
+                <PiMapPinFill className="text-indigo-500" size={10} />{" "}
+                {item.name}
+              </span>
+            ))}
+          </div>
+
+          {/* Rating Footer */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+            <div className="flex gap-0.5">{renderRatings(rating || 5)}</div>
+            <span className="text-[10px] text-slate-500 font-medium">
+              {reviews} Reviews
+            </span>
+          </div>
+
+          {/* Action Button */}
+          {isMatched ? (
+            <button
+              onClick={() => navigate(`/contact?tutorId=${tutorId}`)}
+              className="w-full py-3.5 mt-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 bg-emerald-600/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600 hover:text-white"
+            >
+              <PiConfettiFill size={16} />
+              View Contact
+            </button>
+          ) : (
+            <button
+              onClick={SendMatch}
+              disabled={state === "Applied"}
+              className={`w-full py-3.5 mt-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg ${
+                state === "Applied"
+                  ? "bg-slate-800 text-slate-500 border border-slate-700"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20"
+              }`}
+            >
+              {state === "Connect" && <PiPaperPlaneTiltFill size={16} />}
+              {state}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

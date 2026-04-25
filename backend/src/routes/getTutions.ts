@@ -27,15 +27,18 @@ const getAllTutions = router.get("/all", async (req: any, res: any) => {
     },
   });
 
+  const total = await prisma.student.count();
   const resp = await prisma.student.findMany({
     skip: skip,
     take: limit,
     select: {
       Area: true,
       std: true,
+      message: true,
       postedON: true,
       studentId: true,
       location: true,
+      subject: true,
       matches: {
         where: {
           tutorId: tutor?.id,
@@ -61,6 +64,12 @@ const getAllTutions = router.get("/all", async (req: any, res: any) => {
   //   }
   // )
 
-  return res.json(resp);
+  return res.json({
+    students: resp,
+    page,
+    limit,
+    total,
+    hasNext: skip + resp.length < total,
+  });
 });
 module.exports = getAllTutions;
