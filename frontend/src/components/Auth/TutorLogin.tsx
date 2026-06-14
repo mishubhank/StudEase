@@ -14,10 +14,10 @@ const TutorLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post(
-        buildApiUrl("/api/auth/tutor/signin"),
-        { email: mail, password: pass },
-      );
+      const response = await axios.post(buildApiUrl("/api/auth/tutor/signin"), {
+        email: mail,
+        password: pass,
+      });
       localStorage.setItem("jwt", response.data.jwt);
       navigate("../tutor/dashboard");
     } catch (err) {
