@@ -3,6 +3,8 @@ import type { CorsOptions } from "cors";
 const DEFAULT_LOCAL_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "https://studease-frontend.onrender.com/",
+  "https://studease-frontend.onrender.com/*",
 ];
 
 const REQUIRED_ENV_VARS = [
